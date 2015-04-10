@@ -1,0 +1,19 @@
+name "auv_raw_command_converter"
+version "0.1"
+
+import_types_from "base"
+import_types_from "controldev"
+import_types_from "auv_control"
+
+task_context "Task" do
+    needs_configuration
+
+    input_port("raw_command", "controldev/RawCommand").
+        doc("Port for raw command structures (composed of joystick and sliderbox values)")
+
+    output_port("aligned_velocity_command", "base::LinearAngular6DCommand")
+        doc("Port for the part of the command that is a target velocity")
+
+    port_driven 'raw_command'
+end
+
