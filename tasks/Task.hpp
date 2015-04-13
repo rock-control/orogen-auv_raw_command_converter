@@ -26,7 +26,8 @@ namespace auv_raw_command_converter {
 	friend class TaskBase;
     protected:
 
-
+	States last_state;
+	States new_state;
 
     public:
         /** TaskContext constructor for Task

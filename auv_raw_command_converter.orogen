@@ -14,6 +14,11 @@ task_context "Task" do
     output_port("aligned_velocity_command", "base::LinearAngular6DCommand")
         doc("Port for the part of the command that is a target velocity")
 
+    runtime_states "UNEXPECTED_INPUT"
+    error_states "MISSING_POSE_INFORMATION", 
+                "POSE_SAMPLES_NOT_CONNECTED", 
+                "POSE_SAMPLES_TOO_OLD"
+
     port_driven 'raw_command'
 end
 
