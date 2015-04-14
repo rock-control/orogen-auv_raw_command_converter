@@ -64,7 +64,22 @@ void Task::updateHook()
 	    {
 		new_state = UNEXPECTED_INPUT;
 	    }
-	}    
+	}
+	else if(cmd.deviceIdentifier.find("PLAYSTATION") != std::string::npos)
+	{
+	    if(cmd.axisValue.size() >= 1 && cmd.axisValue[0].size() >= 4)
+	    {
+		// command fits expectation
+		surge = cmd.axisValue[0][1];
+		sway = -cmd.axisValue[0][0];
+		heave = -cmd.axisValue[0][3];
+		yaw = -cmd.axisValue[0][2];
+	    }
+	    else
+	    {
+		new_state = UNEXPECTED_INPUT;
+	    }
+	}
 	else
 	{
 	    // assume the command is provided by a joystick
