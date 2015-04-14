@@ -83,14 +83,15 @@ void Task::updateHook()
 	    
 	}
 
+	double scaling = _scaling.value();
 	base::LinearAngular6DCommand aligned_velocity;
 	aligned_velocity.time = cmd.time;
-	aligned_velocity.linear(0) = surge;
-	aligned_velocity.linear(1) = sway;
-	aligned_velocity.linear(2) = heave;
-	aligned_velocity.angular(0) = roll;
-	aligned_velocity.angular(1) = pitch;
-	aligned_velocity.angular(2) = yaw;
+	aligned_velocity.linear(0) = surge * scaling;
+	aligned_velocity.linear(1) = sway * scaling;
+	aligned_velocity.linear(2) = heave * scaling;
+	aligned_velocity.angular(0) = roll * scaling;
+	aligned_velocity.angular(1) = pitch * scaling;
+	aligned_velocity.angular(2) = yaw * scaling;
 	_aligned_velocity_command.write(aligned_velocity);
 
     }  

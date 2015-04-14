@@ -8,6 +8,9 @@ import_types_from "auv_control"
 task_context "Task" do
     needs_configuration
 
+    property('scaling', 'double', 1.0).
+        doc("The scaling is applied when converting the raw command.")
+
     input_port("raw_command", "controldev/RawCommand").
         doc("Port for raw command structures (composed of joystick and sliderbox values)")
 
