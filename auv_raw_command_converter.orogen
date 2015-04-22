@@ -6,27 +6,6 @@ import_types_from "controldev"
 import_types_from "auv_control"
 import_types_from "ControlDomain.hpp"
 
-task_context "Task" do
-    needs_configuration
-
-    property('scaling', 'double', 1.0).
-        doc("The scaling is applied when converting the raw command.")
-
-    input_port("raw_command", "controldev/RawCommand").
-        doc("Port for raw command structures (composed of joystick and sliderbox values)")
-
-    output_port("aligned_velocity_command", "base::LinearAngular6DCommand")
-        doc("Port for the part of the command that is a target velocity")
-
-    runtime_states "UNEXPECTED_INPUT"
-    error_states "MISSING_POSE_INFORMATION", 
-                "POSE_SAMPLES_NOT_CONNECTED", 
-                "POSE_SAMPLES_TOO_OLD"
-
-    port_driven 'raw_command'
-end
-
-
 task_context "DeviceMapper" do
     needs_configuration
     
