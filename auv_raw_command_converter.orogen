@@ -4,6 +4,7 @@ version "0.1"
 import_types_from "base"
 import_types_from "controldev"
 import_types_from "auv_control"
+import_types_from "ControlDomain.hpp"
 
 task_context "Task" do
     needs_configuration
@@ -25,3 +26,62 @@ task_context "Task" do
     port_driven 'raw_command'
 end
 
+
+task_context "DeviceMapper" do
+    needs_configuration
+    
+    property('device_configs', '/std/vector</auv_raw_command_converter/InputDeviceConfig>').
+        doc("Device identifier and axis mappings.")
+    
+    property('scalings', '/auv_raw_command_converter/Scaling').
+        doc("The scalings are applied when converting the raw command to the linear angular.")
+    
+    
+    input_port("raw_command", "controldev/RawCommand").
+        doc("Port for raw command structures (composed of joystick and sliderbox values)")
+    
+    
+    output_port("linear_angular_command", "base::LinearAngular6DCommand").
+        doc("Linear angular 6D command of the auv control chain")
+        
+    runtime_states "UNKNOWN_INPUT_DEVICE", "UNEXPECTED_INPUT"
+   
+    port_driven 'raw_command'
+end
+
+task_context "CommandDispatcher" do
+    needs_configuration
+    
+    property('control_domains', '/auv_raw_command_converter/LinearAngular6DDomain').
+        doc("Control domain for each of the single dimensions.")
+        
+    # This property defines the timeout for the cmd_in input port in seconds. 0
+    # means that the timeout would be ignored.
+    property "timeout_in", "double", 1.0
+    
+    
+    input_port("cmd_in", "base::LinearAngular6DCommand").
+        doc("Linear angular 6D command that is dispatched according to the control domains.")
+        
+    input_port("pose_samples","/base/samples/RigidBodyState").
+        doc("Pose readings for the control in the world delta frame.").
+        doc("This has to be connected when anything is controlled in the world delta frame.")
+
+
+    output_port("acceleration_command", "base::LinearAngular6DCommand").
+        doc("Port for the part of the command that is in the raw, speed, effort or acceleration domain of the actuators.")
+
+    output_port("aligned_velocity_command", "base::LinearAngular6DCommand").
+        doc("Port for the part of the command that is in the speed domain of the robot.")
+
+    output_port("aligned_position_command", "base::LinearAngular6DCommand").
+        doc("Port for the part of the command that is in the body frame.")
+
+    output_port("world_command", "base::LinearAngular6DCommand").
+        doc("Port for the part of the command that is in world coordinats.")
+        
+    error_states :TIMEOUT, :WAIT_FOR_CONNECTED_INPUT_PORT, :WAIT_FOR_INPUT, :WAIT_FOR_POSE_SAMPLE
+    exception_states :POSE_SAMPLE_INVALID
+    
+    periodic 0.01
+end
