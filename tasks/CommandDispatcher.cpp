@@ -75,7 +75,15 @@ void CommandDispatcher::writeOutputCommands()
 		break;
 	    case WorldFrameDelta:
 		world_cmd.time = command.time;
-		world_cmd.linear[i] = pose_sample.position[i] + command.linear[i];
+                if(std::abs(command.linear[i]) < 1.0e-4 && !base::isNaN(last_delta_world_command.linear[i]))
+                {
+                    world_cmd.linear[i] = last_delta_world_command.linear[i];
+                }
+                else
+                {
+                    world_cmd.linear[i] = pose_sample.position[i] + command.linear[i];
+                    last_delta_world_command.linear[i] = world_cmd.linear[i];
+                }
 		break;
 	    case AlignedPoseFrame:
 		aligned_position_cmd.time = command.time;
@@ -107,10 +115,18 @@ void CommandDispatcher::writeOutputCommands()
 	    case WorldFrameDelta:
 	    {
 		world_cmd.time = command.time;
-		base::Orientation target_orientation = pose_sample.orientation * 
-							Eigen::AngleAxisd(command.angular[i], Eigen::Vector3d::Unit(i));
-		base::Vector3d euler = base::getEuler(target_orientation);
-		world_cmd.angular[i] = euler[2-i];
+                if(std::abs(command.angular[i]) < 1.0e-4 && !base::isNaN(last_delta_world_command.angular[i]))
+                {
+                    world_cmd.angular[i] = last_delta_world_command.angular[i];
+                }
+                else
+                {
+                    base::Orientation target_orientation = pose_sample.orientation * 
+                                                            Eigen::AngleAxisd(command.angular[i], Eigen::Vector3d::Unit(i));
+                    base::Vector3d euler = base::getEuler(target_orientation);
+                    world_cmd.angular[i] = euler[2-i];
+                    last_delta_world_command.angular[i] = world_cmd.angular[i];
+                }
 		break;
 	    }
 	    case AlignedPoseFrame:
@@ -155,6 +171,8 @@ bool CommandDispatcher::configureHook()
     new_command = false;
     domain = _control_domains.value();
     expecting_pose_samples = false;
+    last_delta_world_command.linear = base::NaN<double>() * Eigen::Vector3d::Ones();
+    last_delta_world_command.angular = base::NaN<double>() * Eigen::Vector3d::Ones();
     
     // check if pose samples are needed
     for(unsigned i = 0; i < 3; i++)
