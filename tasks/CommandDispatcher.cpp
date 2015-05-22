@@ -219,14 +219,17 @@ void CommandDispatcher::updateHook()
     
     if(expecting_pose_samples)
     {
-	if(_pose_samples.readNewest(pose_sample) == RTT::NoData)
+        RTT::FlowStatus status = _pose_samples.readNewest(pose_sample);
+	if(status == RTT::NoData)
 	{
 	    if(state() != WAIT_FOR_POSE_SAMPLE)
 		error(WAIT_FOR_POSE_SAMPLE);
 	}
-    
-	if(!pose_sample.hasValidPosition() || !pose_sample.hasValidOrientation())
-	    exception(POSE_SAMPLE_INVALID);
+        else if(status == RTT::NewData)
+        {
+            if(!pose_sample.hasValidPosition() || !pose_sample.hasValidOrientation())
+                exception(POSE_SAMPLE_INVALID);
+        }
     }
     
     if(readInputCommand() || new_command)
