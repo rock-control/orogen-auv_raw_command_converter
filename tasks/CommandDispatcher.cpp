@@ -172,9 +172,6 @@ bool CommandDispatcher::configureHook()
 	}
     }
     
-    if(expecting_pose_samples && !_pose_samples.connected())
-	RTT::log(RTT::Warning) << "Pose samples are required, but currently not connected!" << RTT::endlog();
-    
     // check for misconfiguration
     for(unsigned i = 0; i < 2; i++)
     {
@@ -192,6 +189,10 @@ bool CommandDispatcher::startHook()
 {
     if (! CommandDispatcherBase::startHook())
         return false;
+
+    if(expecting_pose_samples && !_pose_samples.connected())
+        RTT::log(RTT::Warning) << "Pose samples are required, but currently not connected!" << RTT::endlog();
+
     return true;
 }
 void CommandDispatcher::updateHook()
