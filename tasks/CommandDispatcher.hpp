@@ -33,7 +33,7 @@ namespace auv_raw_command_converter {
 	bool expecting_pose_samples;
 	base::Time last_cmd_time;
         base::LinearAngular6DCommand last_delta_world_command;
-	
+	bool new_delta_command[6];
 	
 	
 	bool readInputCommand();
