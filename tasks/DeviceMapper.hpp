@@ -42,9 +42,11 @@ namespace auv_raw_command_converter {
 	std::vector<InputDeviceConfig> device_configs;
 	base::Vector6d scaling;
 	unsigned expected_size;
+        ControlMode control_mode;
 	
 	
 	const InputDeviceConfig& findDeviceConfig(const std::string& identifier);
+        void updateControlMode(const InputDeviceConfig& config, const std::vector<uint8_t>& buttons);
 
     public:
         /** TaskContext constructor for DeviceMapper

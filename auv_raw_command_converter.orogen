@@ -14,6 +14,9 @@ task_context "DeviceMapper" do
     
     property('scalings', '/auv_raw_command_converter/Scaling').
         doc("The scalings are applied when converting the raw command to the linear angular.")
+
+    property('control_mode', '/auv_raw_command_converter/ControlMode', :ControlChain).
+        doc("Currently selected control mode")
     
     
     input_port("raw_command", "controldev/RawCommand").
@@ -22,6 +25,9 @@ task_context "DeviceMapper" do
     
     output_port("linear_angular_command", "base::LinearAngular6DCommand").
         doc("Linear angular 6D command of the auv control chain")
+
+    output_port("acc_override_command", "base::LinearAngular6DCommand").
+        doc("Acceleration command to override the auv control chain")
         
     runtime_states "UNKNOWN_INPUT_DEVICE", "UNEXPECTED_INPUT"
    

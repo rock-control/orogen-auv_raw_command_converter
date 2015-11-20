@@ -29,6 +29,32 @@ const InputDeviceConfig& DeviceMapper::findDeviceConfig(const std::string& ident
     throw UnknownDevice(identifier);
 }
 
+void DeviceMapper::updateControlMode(const InputDeviceConfig& config, const std::vector<uint8_t>& buttons)
+{
+    control_mode = _control_mode.value();
+
+    if(config.button_mapping.control_off >= 0 &&
+        config.button_mapping.control_off < buttons.size() &&
+        buttons[config.button_mapping.control_off] > 0)
+    {
+        control_mode = auv_raw_command_converter::ControlOff;
+    }
+    else if(config.button_mapping.acceleration_override >= 0 &&
+        config.button_mapping.acceleration_override < buttons.size() &&
+        buttons[config.button_mapping.acceleration_override] > 0)
+    {
+        control_mode = auv_raw_command_converter::AccelerationOverride;
+    }
+    else if(config.button_mapping.control_chain >= 0 &&
+        config.button_mapping.control_chain < buttons.size() &&
+        buttons[config.button_mapping.control_chain] > 0)
+    {
+        control_mode = auv_raw_command_converter::ControlChain;
+    }
+
+    _control_mode.set(control_mode);
+}
+
 
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See DeviceMapper.hpp for more detailed
@@ -44,7 +70,8 @@ bool DeviceMapper::configureHook()
     expected_size = 1;
     
     device_configs = _device_configs.value();
-    
+    control_mode = _control_mode.value();
+
     scaling.block(0,0,3,1) = _scalings.value().linear;
     scaling.block(3,0,3,1) = _scalings.value().angular;
     
@@ -84,7 +111,7 @@ void DeviceMapper::updateHook()
 	{
 	    const InputDeviceConfig& config = findDeviceConfig(cmd.deviceIdentifier);
 	    
-	    // flatten input vector
+	    // flatten axis input vector
 	    std::vector<double> cmd_in;
 	    cmd_in.reserve(expected_size);
 	    for(unsigned i = 0; i < cmd.axisValue.size(); i++)
@@ -95,29 +122,57 @@ void DeviceMapper::updateHook()
 		}
 	    }
 	    expected_size = cmd_in.size();
-	    
-	    unsigned known_fields = std::min(cmd_in.size(), (size_t)config.axis_mapping.cols());
-	    if(known_fields == 0)
-	    {
-		RTT::log(RTT::Error) << "Unexpected input." << RTT::endlog();
-		new_state = UNEXPECTED_INPUT;
-	    }
+
+            updateControlMode(config, cmd.buttonValue);
+
+            if(control_mode == auv_raw_command_converter::ControlOff)
+            {
+                base::LinearAngular6DCommand linear_angular_cmd;
+                linear_angular_cmd.time = cmd.time;
+                linear_angular_cmd.linear = base::Vector3d::Zero();
+                linear_angular_cmd.angular = base::Vector3d::Zero();
+                _acc_override_command.write(linear_angular_cmd);
+            }
 	    else
-	    {
-		// compute output command
-		Eigen::VectorXd cmd_in_v = Eigen::Map<Eigen::VectorXd>(cmd_in.data(), cmd_in.size());
-		base::Vector6d cmd_out = config.axis_mapping.block(0, 0, 6, known_fields) * cmd_in_v.block(0, 0, known_fields, 1);
-		
-		// apply coefficient wise scaling
-		cmd_out.array() = cmd_out.array() * scaling.array();
-		
-		// write out command
-		base::LinearAngular6DCommand linear_angular_cmd;
-		linear_angular_cmd.time = cmd.time;
-		linear_angular_cmd.linear = cmd_out.block(0,0,3,1);
-		linear_angular_cmd.angular = cmd_out.block(3,0,3,1);
-		_linear_angular_command.write(linear_angular_cmd);
-	    }
+            {
+                unsigned known_fields = std::min(cmd_in.size(), (size_t)config.axis_mapping.cols());
+                if(known_fields == 0)
+                {
+                    RTT::log(RTT::Error) << "Unexpected input." << RTT::endlog();
+                    new_state = UNEXPECTED_INPUT;
+                }
+                else
+                {
+                    // compute output command
+                    Eigen::VectorXd cmd_in_v = Eigen::Map<Eigen::VectorXd>(cmd_in.data(), cmd_in.size());
+                    base::Vector6d cmd_out = config.axis_mapping.block(0, 0, 6, known_fields) * cmd_in_v.block(0, 0, known_fields, 1);
+
+                    if(control_mode == auv_raw_command_converter::ControlChain)
+                    {
+                        // apply coefficient wise scaling
+                        cmd_out.array() = cmd_out.array() * scaling.array();
+
+                        // write out command
+                        base::LinearAngular6DCommand linear_angular_cmd;
+                        linear_angular_cmd.time = cmd.time;
+                        linear_angular_cmd.linear = cmd_out.block(0,0,3,1);
+                        linear_angular_cmd.angular = cmd_out.block(3,0,3,1);
+
+                        _linear_angular_command.write(linear_angular_cmd);
+                    }
+                    else if(control_mode == auv_raw_command_converter::AccelerationOverride)
+                    {
+                        // write out command
+                        base::LinearAngular6DCommand linear_angular_cmd;
+                        linear_angular_cmd.time = cmd.time;
+                        linear_angular_cmd.linear = cmd_out.block(0,0,3,1);
+                        linear_angular_cmd.angular = cmd_out.block(3,0,3,1);
+
+                        _acc_override_command.write(linear_angular_cmd);
+                    }
+
+                }
+            }
 	}
 	catch (const UnknownDevice& e)
 	{

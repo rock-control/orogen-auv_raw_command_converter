@@ -20,6 +20,13 @@ enum ControlDomain
     Raw // Raw value of the actuators
 };
 
+enum ControlMode
+{
+    ControlOff = 0,
+    AccelerationOverride,
+    ControlChain
+};
+
 struct LinearAngular6DDomain
 {
     ControlDomain linear[3];
@@ -34,6 +41,15 @@ struct LinearAngular6DDomain
 	angular[1] = Raw;
 	angular[2] = Raw;
     }
+};
+
+struct ButtonMapping
+{
+    int control_off;
+    int acceleration_override;
+    int control_chain;
+
+    ButtonMapping() : control_off(-1), acceleration_override(-1), control_chain(-1) {}
 };
 
 struct Scaling
@@ -52,6 +68,7 @@ struct InputDeviceConfig
 {
     std::string device_identifier;
     base::MatrixXd axis_mapping;
+    ButtonMapping button_mapping;
     
     bool isValid()
     {
@@ -61,6 +78,8 @@ struct InputDeviceConfig
 	return false;
     }
 };
+
+
 
 }
 
