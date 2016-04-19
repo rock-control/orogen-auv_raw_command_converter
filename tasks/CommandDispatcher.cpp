@@ -106,6 +106,10 @@ void CommandDispatcher::writeOutputCommands()
 		acceleration_cmd.time = command.time;
 		acceleration_cmd.linear[i] = command.linear[i];
 		break;
+	    case Unset:
+		acceleration_cmd.time = command.time;
+		acceleration_cmd.linear[i] = base::unset<double>();
+		break;
 	}
     }
     
@@ -157,6 +161,10 @@ void CommandDispatcher::writeOutputCommands()
 	    case Raw:
 		acceleration_cmd.time = command.time;
 		acceleration_cmd.angular[i] = command.angular[i];
+		break;
+	    case Unset:
+		acceleration_cmd.time = command.time;
+		acceleration_cmd.angular[i] = base::unset<double>();
 		break;
 	}
     }
