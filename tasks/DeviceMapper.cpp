@@ -25,7 +25,7 @@ const InputDeviceConfig& DeviceMapper::findDeviceConfig(const std::string& ident
 	if(identifier.find(device_configs[i].device_identifier) != std::string::npos)
 	    return device_configs[i];
     }
-    
+
     throw UnknownDevice(identifier);
 }
 
@@ -64,23 +64,23 @@ bool DeviceMapper::configureHook()
 {
     if (! DeviceMapperBase::configureHook())
         return false;
-    
+
     last_state = PRE_OPERATIONAL;
     new_state = RUNNING;
     expected_size = 1;
-    
+
     device_configs = _device_configs.value();
     control_mode = _control_mode.value();
 
     scaling.block(0,0,3,1) = _scalings.value().linear;
     scaling.block(3,0,3,1) = _scalings.value().angular;
-    
+
     if(device_configs.empty())
     {
 	RTT::log(RTT::Error) << "No device configuration available." << RTT::endlog();
 	return false;
     }
-    
+
     for(unsigned i = 0; i < device_configs.size(); i++)
     {
 	if(!device_configs[i].isValid())
@@ -90,7 +90,7 @@ bool DeviceMapper::configureHook()
 	    return false;
 	}
     }
-    
+
     return true;
 }
 bool DeviceMapper::startHook()
@@ -103,14 +103,14 @@ void DeviceMapper::updateHook()
 {
     new_state = RUNNING;
     DeviceMapperBase::updateHook();
-    
+
     controldev::RawCommand cmd;
     if(_raw_command.readNewest(cmd) == RTT::NewData)
     {
 	try
 	{
 	    const InputDeviceConfig& config = findDeviceConfig(cmd.deviceIdentifier);
-	    
+
 	    // flatten axis input vector
 	    std::vector<double> cmd_in;
 	    cmd_in.reserve(expected_size);
@@ -164,6 +164,7 @@ void DeviceMapper::updateHook()
                     {
                         // write out command
                         base::LinearAngular6DCommand linear_angular_cmd;
+                        cmd_out = cmd_out * _scalings.value().acceleration_override;
                         linear_angular_cmd.time = cmd.time;
                         linear_angular_cmd.linear = cmd_out.block(0,0,3,1);
                         linear_angular_cmd.angular = cmd_out.block(3,0,3,1);
@@ -179,9 +180,9 @@ void DeviceMapper::updateHook()
 	    RTT::log(RTT::Error) << e.what() << RTT::endlog();
 	    new_state = UNKNOWN_INPUT_DEVICE;
 	}
-	
+
     }
-    
+
     // write task state if it has changed
     if(last_state != new_state)
     {
