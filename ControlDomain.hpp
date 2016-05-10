@@ -57,11 +57,13 @@ struct Scaling
 {
     base::Vector3d linear;
     base::Vector3d angular;
+    double acceleration_override;
     
     Scaling()
     {
 	linear = base::Vector3d::Ones();
 	angular = base::Vector3d::Ones();
+        acceleration_override = 1.0;
     }
 };
 
