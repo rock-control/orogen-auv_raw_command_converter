@@ -32,7 +32,7 @@ struct LinearAngular6DDomain
 {
     ControlDomain linear[3];
     ControlDomain angular[3];
-    
+
     LinearAngular6DDomain()
     {
 	linear[0] = Raw;
@@ -57,11 +57,13 @@ struct Scaling
 {
     base::Vector3d linear;
     base::Vector3d angular;
-    
+    double acceleration_override;
+
     Scaling()
     {
-	linear = base::Vector3d::Ones();
-	angular = base::Vector3d::Ones();
+    linear = base::Vector3d::Ones();
+    angular = base::Vector3d::Ones();
+    acceleration_override = 1.0;
     }
 };
 
@@ -70,12 +72,12 @@ struct InputDeviceConfig
     std::string device_identifier;
     base::MatrixXd axis_mapping;
     ButtonMapping button_mapping;
-    
+
     bool isValid()
     {
 	if(axis_mapping.rows() == 6)
 		return true;
-	
+
 	return false;
     }
 };
