@@ -164,6 +164,7 @@ void DeviceMapper::updateHook()
                     {
                         // write out command
                         base::LinearAngular6DCommand linear_angular_cmd;
+                        cmd_out = cmd_out * _scalings.value().acceleration_override;
                         linear_angular_cmd.time = cmd.time;
                         linear_angular_cmd.linear = cmd_out.block(0,0,3,1);
                         linear_angular_cmd.angular = cmd_out.block(3,0,3,1);
