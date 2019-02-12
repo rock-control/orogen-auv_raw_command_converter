@@ -23,9 +23,12 @@ enum ControlDomain
 
 enum ControlMode
 {
+    Timeout = -1,
     ControlOff = 0,
     AccelerationOverride,
-    ControlChain
+    ControlChain,
+    KeepAlive,
+    Autonomous
 };
 
 struct LinearAngular6DDomain
@@ -35,12 +38,12 @@ struct LinearAngular6DDomain
     
     LinearAngular6DDomain()
     {
-	linear[0] = Raw;
-	linear[1] = Raw;
-	linear[2] = Raw;
-	angular[0] = Raw;
-	angular[1] = Raw;
-	angular[2] = Raw;
+        linear[0] = Raw;
+        linear[1] = Raw;
+        linear[2] = Raw;
+        angular[0] = Raw;
+        angular[1] = Raw;
+        angular[2] = Raw;
     }
 };
 
@@ -49,8 +52,10 @@ struct ButtonMapping
     int control_off;
     int acceleration_override;
     int control_chain;
+    int keep_alive;
+    int autonomous;
 
-    ButtonMapping() : control_off(-1), acceleration_override(-1), control_chain(-1) {}
+    ButtonMapping() : control_off(-1), acceleration_override(-1), control_chain(-1), keep_alive(-1), autonomous(-1) {}
 };
 
 struct Scaling
@@ -61,8 +66,8 @@ struct Scaling
     
     Scaling()
     {
-	linear = base::Vector3d::Ones();
-	angular = base::Vector3d::Ones();
+        linear = base::Vector3d::Ones();
+        angular = base::Vector3d::Ones();
         acceleration_override = 1.0;
     }
 };
@@ -75,10 +80,10 @@ struct InputDeviceConfig
     
     bool isValid()
     {
-	if(axis_mapping.rows() == 6)
-		return true;
-	
-	return false;
+        if(axis_mapping.rows() == 6)
+            return true;
+
+        return false;
     }
 };
 

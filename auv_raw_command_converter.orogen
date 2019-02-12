@@ -17,6 +17,9 @@ task_context "DeviceMapper" do
 
     property('control_mode', '/auv_raw_command_converter/ControlMode', :ControlChain).
         doc("Currently selected control mode")
+
+    property('cmd_timeout', '/base/Time').
+        doc("Input command timeout")
     
     
     input_port("raw_command", "controldev/RawCommand").
@@ -29,9 +32,9 @@ task_context "DeviceMapper" do
     output_port("acc_override_command", "base::LinearAngular6DCommand").
         doc("Acceleration command to override the auv control chain")
         
-    runtime_states "UNKNOWN_INPUT_DEVICE", "UNEXPECTED_INPUT"
+    runtime_states "UNKNOWN_INPUT_DEVICE", "UNEXPECTED_INPUT", "TIMEOUT"
    
-    port_driven 'raw_command'
+    periodic 0.01
 end
 
 task_context "CommandDispatcher" do

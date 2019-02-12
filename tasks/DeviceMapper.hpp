@@ -4,6 +4,7 @@
 #define AUV_RAW_COMMAND_CONVERTER_DEVICEMAPPER_TASK_HPP
 
 #include "auv_raw_command_converter/DeviceMapperBase.hpp"
+#include <base/Timeout.hpp>
 
 namespace auv_raw_command_converter {
 
@@ -25,27 +26,28 @@ namespace auv_raw_command_converter {
     {
 	friend class DeviceMapperBase;
     protected:
-	struct UnknownDevice : public std::runtime_error
-	{
-	    std::string name;
-	    UnknownDevice(std::string const& name)
-		: std::runtime_error("trying to find device with identifier " + name + 
-			", but there is no element with this name available.")
-		  , name(name) {}
+        struct UnknownDevice : public std::runtime_error
+        {
+            std::string name;
+            UnknownDevice(std::string const& name)
+            : std::runtime_error("trying to find device with identifier " + name +
+                ", but there is no element with this name available.")
+            , name(name) {}
 
-	    ~UnknownDevice() throw() {}
-	};
-	
+            ~UnknownDevice() throw() {}
+        };
 
-	States last_state;
-	States new_state;
-	std::vector<InputDeviceConfig> device_configs;
-	base::Vector6d scaling;
-	unsigned expected_size;
+        States last_state;
+        States new_state;
+        std::vector<InputDeviceConfig> device_configs;
+        base::Vector6d scaling;
+        unsigned expected_size;
         ControlMode control_mode;
-	
-	
-	const InputDeviceConfig& findDeviceConfig(const std::string& identifier);
+        base::LinearAngular6DCommand linear_angular_cmd;
+        base::Timeout cmd_timeout;
+
+
+        const InputDeviceConfig& findDeviceConfig(const std::string& identifier);
         void updateControlMode(const InputDeviceConfig& config, const std::vector<uint8_t>& buttons);
 
     public:
@@ -64,7 +66,7 @@ namespace auv_raw_command_converter {
 
         /** Default deconstructor of DeviceMapper
          */
-	~DeviceMapper();
+        ~DeviceMapper();
 
         /** This hook is called by Orocos when the state machine transitions
          * from PreOperational to Stopped. If it returns false, then the
