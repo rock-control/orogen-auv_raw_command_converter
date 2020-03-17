@@ -41,7 +41,6 @@ namespace auv_raw_command_converter {
         States new_state;
         std::vector<InputDeviceConfig> device_configs;
         base::Vector6d scaling;
-        unsigned expected_size;
         ControlMode control_mode;
         base::LinearAngular6DCommand linear_angular_cmd;
         base::Timeout cmd_timeout;

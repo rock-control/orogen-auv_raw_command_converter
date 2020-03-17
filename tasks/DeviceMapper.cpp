@@ -34,31 +34,31 @@ void DeviceMapper::updateControlMode(const InputDeviceConfig& config, const std:
     control_mode = _control_mode.value();
 
     if(config.button_mapping.control_off >= 0 &&
-        config.button_mapping.control_off < buttons.size() &&
+        config.button_mapping.control_off < (int)buttons.size() &&
         buttons[config.button_mapping.control_off] > 0)
     {
         control_mode = auv_raw_command_converter::ControlOff;
     }
     else if(config.button_mapping.acceleration_override >= 0 &&
-        config.button_mapping.acceleration_override < buttons.size() &&
+        config.button_mapping.acceleration_override < (int)buttons.size() &&
         buttons[config.button_mapping.acceleration_override] > 0)
     {
         control_mode = auv_raw_command_converter::AccelerationOverride;
     }
     else if(config.button_mapping.control_chain >= 0 &&
-        config.button_mapping.control_chain < buttons.size() &&
+        config.button_mapping.control_chain < (int)buttons.size() &&
         buttons[config.button_mapping.control_chain] > 0)
     {
         control_mode = auv_raw_command_converter::ControlChain;
     }
     else if(config.button_mapping.keep_alive >= 0 &&
-        config.button_mapping.keep_alive < buttons.size() &&
+        config.button_mapping.keep_alive < (int)buttons.size() &&
         buttons[config.button_mapping.keep_alive] > 0)
     {
         control_mode = auv_raw_command_converter::KeepAlive;
     }
     else if(config.button_mapping.autonomous >= 0 &&
-        config.button_mapping.autonomous < buttons.size() &&
+        config.button_mapping.autonomous < (int)buttons.size() &&
         buttons[config.button_mapping.autonomous] > 0)
     {
         control_mode = auv_raw_command_converter::Autonomous;
@@ -79,7 +79,6 @@ bool DeviceMapper::configureHook()
     
     last_state = PRE_OPERATIONAL;
     new_state = RUNNING;
-    expected_size = 1;
     
     device_configs = _device_configs.value();
     control_mode = _control_mode.value();
@@ -127,18 +126,6 @@ void DeviceMapper::updateHook()
         {
             const InputDeviceConfig& config = findDeviceConfig(cmd.deviceIdentifier);
 
-            // flatten axis input vector
-            std::vector<double> cmd_in;
-            cmd_in.reserve(expected_size);
-            for(unsigned i = 0; i < cmd.axisValue.size(); i++)
-            {
-                for(unsigned j = 0; j < cmd.axisValue[i].size(); j++)
-                {
-                    cmd_in.push_back(cmd.axisValue[i][j]);
-                }
-            }
-            expected_size = cmd_in.size();
-
             // update control mode from buttons
             updateControlMode(config, cmd.buttonValue);
 
@@ -146,7 +133,7 @@ void DeviceMapper::updateHook()
             cmd_timeout.restart();
 
             // parse input cmd
-            unsigned known_fields = std::min(cmd_in.size(), (size_t)config.axis_mapping.cols());
+            unsigned known_fields = std::min(cmd.axisValue.size(), (size_t)config.axis_mapping.cols());
             if(known_fields == 0)
             {
                 RTT::log(RTT::Error) << "Unexpected input." << RTT::endlog();
@@ -155,7 +142,7 @@ void DeviceMapper::updateHook()
             else
             {
                 // compute output command
-                Eigen::VectorXd cmd_in_v = Eigen::Map<Eigen::VectorXd>(cmd_in.data(), cmd_in.size());
+                Eigen::VectorXd cmd_in_v = Eigen::Map<Eigen::VectorXd>(cmd.axisValue.data(), cmd.axisValue.size());
                 cmd_out = config.axis_mapping.block(0, 0, 6, known_fields) * cmd_in_v.block(0, 0, known_fields, 1);
 
                 if(control_mode == auv_raw_command_converter::ControlChain)
