@@ -120,6 +120,7 @@ void DeviceMapper::updateHook()
 
     controldev::RawCommand cmd;
     base::Vector6d cmd_out = base::Vector6d::Ones() * base::NaN<double>();
+    base::LinearAngular6DCommand unset_cmd = base::commands::LinearAngular6DCommand();
     if(_raw_command.readNewest(cmd) == RTT::NewData)
     {
         try
@@ -200,9 +201,8 @@ void DeviceMapper::updateHook()
             _linear_angular_command.write(linear_angular_cmd);
         case auv_raw_command_converter::KeepAlive:
         case auv_raw_command_converter::Autonomous:
-            linear_angular_cmd.linear = base::Vector3d::Ones() * base::NaN<double>();
-            linear_angular_cmd.angular = base::Vector3d::Ones() * base::NaN<double>();
-            _acc_override_command.write(linear_angular_cmd);
+            unset_cmd.time = linear_angular_cmd.time;
+            _acc_override_command.write(unset_cmd);
             break;
         case auv_raw_command_converter::Timeout:
         default:
